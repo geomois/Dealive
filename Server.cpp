@@ -7,6 +7,8 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost\thread.hpp>
 #include "Server.h"
+#include "connection.h"
+#include "requestHandler.h"
 #define port 2000
 using boost::asio::ip::tcp;
 using namespace std;
@@ -64,13 +66,12 @@ void server::run()
 }
 
 void server::start_accept(){
-	{
+
 		newConnection.reset(new connection(io_s,reqHandler));
 		acceptor.async_accept(newConnection.getSocket(),
 		boost::bind(&server::handle_accept, shared_from_this(),
         boost::asio::placeholders::error));
-	}
-
+}
 void server::handle_stop(){
   io_s.stop();
 }

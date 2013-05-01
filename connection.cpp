@@ -7,6 +7,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include "Server.h"
+#include "connection.h"
+#include "requestHandler.h"
 #define port 2000
 using namespace std;
 
@@ -27,11 +29,11 @@ public:
 }
 
 connection::connection(boost::asio::io_service& io_s,requestHandler& req)
-	:strand(io_s),sock(io_s),reqHandler(req)
+	:strand(io_s),sock(io_s)
 {
 }
 
-boost::asio::ip::tcp::socket getSocket(){
+boost::asio::ip::tcp::socket connection::getSocket(){
 	return sock;
 }
 
@@ -45,8 +47,8 @@ void connection::start(){
 void connection::handleRead(const boost::system::error_code& e,size_t bt){
 	//enalaktika to kanw me iostream
 	if(!e){
-		int result=reqHandler(buffer);
-		if(result==-1){
+		char result=reqHandler.messageAnalyze;
+		if(result=="-1"){
 			std::string error="Bad request\n";
 			sock.async_read_some(error,strand.wrap(bind(&connection::handleWrite,boost::asio::placeholders::error)));
 		}
