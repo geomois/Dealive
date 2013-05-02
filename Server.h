@@ -3,25 +3,25 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-
+#include "connection.h"
 
 
 class server
   : private boost::noncopyable
 {
 public:
-  server(boost::asio::io_service& io_s, std::size_t thread_pool, const string& address);
-
-  void run();
-
+	server(std::size_t, const string);
+	requestHandler reqHandler();
+	shared_ptr<connection> newConnection;
+	
 private:
-  void start_accept();
-/// Handle completion of an asynchronous accept operation.
-  void handle_accept(const boost::system::error_code& e);
-/// Handle a request to stop the server.
-  void handle_stop();
-  
-  boost::asio::io_service io_s;
-  boost::asio::ip::tcp::acceptor acceptor;
-  shared_ptr<connection> newConnection;
-}
+	boost::asio::io_service io_s;
+	tcp::acceptor acceptor;
+	size_t threadPoolSize;
+	
+	void run();
+	void start_accept();
+	void handle_stop();
+	void handle_accept(const boost::system::error_code&);
+	shared_ptr<connection> newConnection;
+};

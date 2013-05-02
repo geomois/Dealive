@@ -5,29 +5,20 @@
 #include "string.h"
 #include <boost/bind.hpp>
 #include <boost/noncopyable.hpp>
+#include "requestHandler.h"
+#include "Fetch.h"
+#include "Deals.h"
 
-class requestHandler:boost::noncopyable{
-private:
-	char* sendBuffer;
-	int id,result;
-	std::string temp;
-	requestHandler(char);
-	char* call_DB(int choice,int id);  //choice: 1Deals, 2Store
-	
-public:
-	char* messageAnalyze(char&);
-	void reset(); //δεν έχει λόγο να είναι public
-}
-
-requestHandler::requestHandler(char buff)
+requestHandler::requestHandler()
 {
-	std::string temp(&buff);
+	Fetch session();
 }
 
-char* requestHandler::messageAnalyze(char& buff){
+char* requestHandler::messageAnalyze(char buff[]){
 	
+	std::string temp(buff);
 	reset();
-	sscanf(&buff,"%s,%d",temp,id);
+	sscanf(buff,"%s,%d",temp,id);
 	
 	result=temp.compare("Deals");
 	if(result==0){
@@ -43,11 +34,18 @@ char* requestHandler::messageAnalyze(char& buff){
 }
 
 char* requestHandler::call_DB(int choice, int id){
-	//
-	//
-	//
-	//
+	int* arraysize=0;
+	if(id==0){
+		char* tempBuff;	
+		strcat(tempBuff,std::string(session.Deals(1,*arraysize)));
+		strcat(tempBuff,session.Deals(2,*arraysize));
+		strcat(tempBuff,session.Deals(3,*arraysize));
+	}
+	else{
+
+	}
 }
+
 
 void requestHandler::reset(){
 	memset(&sendBuffer,0,sizeof*(sendBuffer));

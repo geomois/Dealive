@@ -11,9 +11,10 @@ private:
 	char* sendBuffer;
 	int id,result;
 	std::string temp;
-	requestHandler(char);
+	requestHandler();
 	char* call_DB(int choice,int id);  //choice: 1Deals, 2Store
+	Fetch session;
 public:
-	char* messageAnalyze(char&);
+	char* messageAnalyze(char*);
 	void reset();
 };

@@ -12,24 +12,10 @@
 #define port 2000
 using namespace std;
 
-class connection {
-private:
-	boost::asio::ip::tcp::socket sock;
-	char buffer[8192];
-	boost::asio::io_service::strand strand;
-	requestHandler reqHandler();
-	typedef boost::shared_ptr<connection> connection_ptr;
 
-public:
-	connection(boost::asio::io_service&,requestHandler&);
-	boost::asio::ip::tcp::socket getSocket();
-	void start();
-	void handleRead(const boost::system::error_code& e,size_t bt);
-	void handleWrite(const boost::system::error_code& e);
-}
 
-connection::connection(boost::asio::io_service& io_s,requestHandler& req)
-	:strand(io_s),sock(io_s)
+connection::connection(boost::asio::io_service io_s,requestHandler req)
+	:strand(io_s),sock(io_s),reqHandler(req)
 {
 }
 
@@ -37,32 +23,34 @@ boost::asio::ip::tcp::socket connection::getSocket(){
 	return sock;
 }
 
-void connection::start(){
-	sock.async_read_some(buffer, strand.wrap(boost::bind(&connection::handleRead, this,
+void connection::read(){
+	sock.async_read_some(buffer, strand.wrap(boost::bind(&connection::handleRead, shared_from_this(),
           boost::asio::placeholders::error,
-          boost::asio::placeholders::bytes_transferred)));//shared_from_this mesa sthn bind epeidh h handleRead einai member function kai kaleitai ws pointer (prwto argument sthn bind
+          boost::asio::placeholders::bytes_transferred)));
+	//shared_from_this mesa sthn bind epeidh h handleRead einai member function kai kaleitai ws pointer (prwto argument sthn bind)
 	
 }
 
 void connection::handleRead(const boost::system::error_code& e,size_t bt){
 	//enalaktika to kanw me iostream
 	if(!e){
-		char result=reqHandler.messageAnalyze;
+		char* result=reqHandler.messageAnalyze(buffer);
 		if(result=="-1"){
 			std::string error="Bad request\n";
-			sock.async_read_some(error,strand.wrap(bind(&connection::handleWrite,boost::asio::placeholders::error)));
+			sock.async_write_some(error,strand.wrap(bind(&connection::handleWrite, shared_from_this(), boost::asio::placeholders::error)));
 		}
-		else if(result==0)
+		else
 		{
-			//ο requestHandler επιστρέφει τα αποτελέσματα στον ίδιο buffer που του δίνεται από την κλήση του
-			//πριν ξαναγράψει σε αυτόν ΝΑ ΤΟΝ ΚΑΝΩ FLUSH, το χρησιμοποιώ για να στείλω την απάντηση όπως είναι
-			sock.async_write_some(buffer,strand.wrap(bind(&connection::handleWrite,boost::asio::placeholders::error)));
+		
+			sock.async_write_some(result,strand.wrap(bind(&connection::handleWrite,shared_from_this(),boost::asio::placeholders::error)));
 		}
-		//*/
-		//sock.async_write_some(///
-
+		
+		read();
 }
 }
-void handleWrite(boost::system::error_code& e){
-	//sock.shutdown etc
+void connection::handleWrite(const boost::system::error_code& e){
+	if(!e){
+		cout<<"send error"<<endl;
+		sock.shutdown(boost::asio::ip::tcp::socket::shutdown_both); //kleisimo kai send kai receive (both)
 	}
+}
